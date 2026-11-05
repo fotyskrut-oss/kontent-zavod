@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2.3 CLAUDE.md и скиллы — Контент-завод на Claude</title><meta name="description" content="Урок 2.3. CLAUDE.md и скиллы">
+<meta name="robots" content="noindex"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap"><style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#17171a;--muted:#5d5d66;--line:#e4e0d6;--accent:#e2532d;--accent-soft:#fbe6dd;--code:#1d1d22;--code-ink:#eceae4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121214;--card:#1b1b1f;--ink:#efede8;--muted:#a3a1a9;--line:#2c2c33;--accent:#ff7a52;--accent-soft:#3a2219;--code:#0b0b0d;--code-ink:#eceae4}}
+:root[data-theme="dark"]{--bg:#121214;--card:#1b1b1f;--ink:#efede8;--muted:#a3a1a9;--line:#2c2c33;--accent:#ff7a52;--accent-soft:#3a2219;--code:#0b0b0d;--code-ink:#eceae4}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Manrope,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--accent)}
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+.brand{font:700 15px/1.2 Unbounded,sans-serif;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand b{color:var(--accent)}
+.top nav{display:flex;gap:14px;font-size:14px}.top nav a{color:var(--muted);text-decoration:none}.top nav a:hover{color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px}
+aside{position:sticky;top:72px;align-self:start;max-height:calc(100vh - 90px);overflow:auto;font-size:14.5px}
+aside h4{font:600 12px/1.3 Unbounded,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
+aside a{display:block;padding:6px 10px;border-radius:8px;color:var(--ink);text-decoration:none;line-height:1.35}
+aside a:hover{background:var(--card)}aside a.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+aside a small{color:var(--muted);font-weight:500;margin-right:6px}
+main{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:40px clamp(18px,5vw,56px)}
+main h1{font:700 clamp(26px,4vw,38px)/1.15 Unbounded,sans-serif;letter-spacing:-.02em;margin:0 0 20px}
+main h2{font:700 22px/1.25 Unbounded,sans-serif;margin:44px 0 12px;letter-spacing:-.01em}
+main h3{font-size:18px;margin:28px 0 8px}
+main p,main li{max-width:72ch}
+main ul,main ol{padding-left:1.3em}main li{margin:6px 0}
+li.task{list-style:none;margin-left:-1.3em}li.task input{accent-color:var(--accent);width:17px;height:17px;vertical-align:-3px;margin-right:6px}
+code{font:500 .88em/1.4 "JetBrains Mono",ui-monospace,Consolas,monospace;background:var(--accent-soft);padding:1px 5px;border-radius:5px}
+.code{position:relative;margin:16px 0}
+.code pre{margin:0;background:var(--code);color:var(--code-ink);border-radius:12px;padding:18px 18px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.code pre code{background:none;padding:0;font-size:14px;line-height:1.6;color:inherit}
+.copy{position:absolute;top:8px;right:8px;font:600 12px Manrope,sans-serif;border:0;border-radius:7px;padding:5px 9px;background:#ffffff1f;color:#fff;cursor:pointer}
+.copy:hover{background:#ffffff38}
+.table{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{background:var(--bg);font-weight:700}tr:last-child td{border-bottom:0}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+.pager a{flex:1;max-width:48%;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}.pager small{display:block;color:var(--muted);font-size:13px}.pager .next{text-align:right;margin-left:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:16px 0 8px}
+.cards a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);background:var(--bg)}
+.cards a:hover{border-color:var(--accent)}.cards small{color:var(--accent);font-weight:700;display:block}
+.lead{font-size:18px;color:var(--muted)}
+.menu{display:none}
+@media (max-width:860px){.wrap{grid-template-columns:1fr;gap:16px}aside{position:static;max-height:none;display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px 12px}aside.open{display:block}.menu{display:inline-block;font:600 14px Manrope,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:6px 12px}.top nav{display:none}main{padding:28px 18px}}
+</style></head>
+<body>
+<header class="top"><div class="in"><a class="brand" href="/kontent-zavod/">Контент-завод <b>на Claude</b></a>
+<nav><a href="/kontent-zavod/">О курсе</a><a href="/kontent-zavod/week-1/">Неделя 1</a></nav><button class="menu" type="button">Уроки</button></div></header>
+<div class="wrap"><aside>
+<h4>Неделя 1</h4><a href="/kontent-zavod/week-1/">Обзор, шпаргалка и 20 шаблонов</a>
+<h4>Модуль 1. База нейросетей</h4><a href="/kontent-zavod/week-1/l1-1/"><small>1.1</small>Как устроены нейросети</a><a href="/kontent-zavod/week-1/l1-2/"><small>1.2</small>Какая нейросеть для чего</a><a href="/kontent-zavod/week-1/l1-3/"><small>1.3</small>Промпт, который работает</a><a href="/kontent-zavod/week-1/l1-4/"><small>1.4</small>Картинки, голос, видео</a><a href="/kontent-zavod/week-1/l1-5/"><small>1.5</small>Права, данные и честность</a><a href="/kontent-zavod/week-1/l1-6/"><small>1.6</small>Своя библиотека промптов</a>
+<h4>Модуль 2. Claude Code</h4><a href="/kontent-zavod/week-1/l2-1/"><small>2.1</small>Установка Claude Code</a><a href="/kontent-zavod/week-1/l2-2/"><small>2.2</small>Как ставить задачу агенту</a><a href="/kontent-zavod/week-1/l2-3/" class="on"><small>2.3</small>CLAUDE.md и скиллы</a><a href="/kontent-zavod/week-1/l2-4/"><small>2.4</small>Коннекторы</a><a href="/kontent-zavod/week-1/l2-5/"><small>2.5</small>Когда что-то сломалось</a><a href="/kontent-zavod/week-1/l2-6/"><small>2.6</small>Практикум</a>
+</aside><main><h1 id="урок-23-claudemd-и-скиллы">Урок 2.3. CLAUDE.md и скиллы</h1>
+<p>Каждая новая сессия Claude Code начинается с чистого листа: он не помнит, о чём вы договаривались вчера. Чтобы не объяснять всё заново, есть два инструмента: <strong>CLAUDE.md</strong> — правила проекта, и <strong>скиллы</strong> — готовые инструкции для повторяющихся задач.</p>
+<h2 id="claudemd-—-память-проекта">CLAUDE.md — память проекта</h2>
+<p>Это обычный текстовый файл в корне папки проекта. Claude Code читает его автоматически в начале каждой сессии. Аналогия: инструкция для нового сотрудника, которую он перечитывает каждое утро.</p>
+<h3 id="что-туда-писать">Что туда писать</h3>
+<ul><li>Кто вы и чем занимаетесь (или ссылка на passport.md).</li><li>Структура папок: что где лежит.</li><li>Правила тона и оформления.</li><li>Запреты: что нельзя делать никогда.</li><li>Рабочие привычки: «сначала показывай план», «пиши по-русски».</li></ul>
+<h3 id="пример-claudemd-для-детского-центра">Пример CLAUDE.md для детского центра</h3>
+<div class="code"><button class="copy" type="button">Копировать</button><pre><code># Контент центра «[Название]»
+
+## О нас
+Полный паспорт — в passport.md. Прочитай его перед любой задачей про тексты.
+
+## Папки
+- posts/ — готовые посты, по неделям (week_45, week_46...)
+- photos/ — фото с согласием родителей. Других фото не использовать.
+- prompts/ — библиотека промптов
+
+## Тон
+Спокойный, тёплый, на «вы». Без эмодзи в первой строке.
+
+## Никогда
+- не обещать результат («заговорит», «вылечим»);
+- не упоминать имена и диагнозы детей;
+- не удалять файлы, только переносить в archive/.
+
+## Как работаем
+Сначала план, потом работа. В конце — список созданных файлов.</code></pre></div>
+<h3 id="как-его-создать">Как его создать</h3>
+<p>Не пишите с нуля. Попросите: «Создай CLAUDE.md для этого проекта. Посмотри папки, прочитай passport.md и задай мне вопросы про правила и запреты». Потом дополняйте его каждый раз, когда повторяете одну и ту же правку: «Добавь это правило в CLAUDE.md».</p>
+<h3 id="правило-короткого-файла">Правило короткого файла</h3>
+<p>CLAUDE.md читается каждый раз, поэтому держите его коротким (1–2 экрана). Большие документы (паспорт, стиль-гайд) — в отдельных файлах, а в CLAUDE.md — ссылки на них.</p>
+<h2 id="скиллы-—-готовые-умения">Скиллы — готовые умения</h2>
+<p>Скилл — это папка с инструкцией (файл SKILL.md) и, если нужно, примерами, шаблонами и скриптами. В отличие от CLAUDE.md он загружается <strong>только когда нужен</strong>: Claude видит короткое описание скилла и сам решает его открыть, или вы вызываете его командой со слэшем.</p>
+<div class="table"><table><thead><tr><th></th><th>CLAUDE.md</th><th>Скилл</th></tr></thead><tbody><tr><td>Когда читается</td><td>всегда</td><td>когда задача подходит</td></tr><tr><td>Что внутри</td><td>общие правила проекта</td><td>пошаговая инструкция одной задачи</td></tr><tr><td>Пример</td><td>«на вы, без обещаний»</td><td>«как сделать ролик из поста»</td></tr><tr><td>Можно перенести в другой проект</td><td>нет, он про этот проект</td><td>да</td></tr></tbody></table></div>
+<h3 id="пример-из-нашей-работы">Пример из нашей работы</h3>
+<p>Мы пользуемся скиллом для motion-роликов: в нём описано, как придумать раскадровку, каким должен быть ритм, как проверить готовое видео. Когда мы просим «сделай анимацию», Claude открывает скилл и работает по нему — без наших объяснений.</p>
+<h3 id="как-сделать-свой-скилл">Как сделать свой скилл</h3>
+<ol><li>Найдите задачу, которую делаете регулярно и объясняете одно и то же: «пост из фото с занятия», «недельный контент-план».</li><li>Сделайте её один раз вместе с Claude до хорошего результата.</li><li>Попросите: <strong>«Сделай из этого скилл, чтобы в следующий раз ты делал так же без моих объяснений»</strong>. У Claude есть встроенный помощник для создания скиллов.</li><li>Проверьте в новой сессии: дайте короткую задачу и посмотрите, подхватился ли скилл.</li><li>Дорабатывайте по ходу: «Добавь в скилл, что…».</li></ol>
+<p>Хорошее описание скилла говорит, <strong>когда</strong> его использовать: «Используй, когда нужно сделать пост из фото с занятия». По этой фразе Claude и решает, открывать ли его.</p>
+<h2 id="типичные-ошибки">Типичные ошибки</h2>
+<ul><li>CLAUDE.md на 10 страниц — важное тонет среди неважного.</li><li>Расплывчатые правила: «пиши хорошо» вместо «до 900 знаков, на вы».</li><li>Скилл без понятного описания — Claude его не находит.</li><li>Устанавливать чужие скиллы из непроверенных источников, не прочитав: скилл может содержать скрипты.</li></ul>
+<h2 id="практика-40-минут">Практика (40 минут)</h2>
+<ol><li>Попросите Claude Code создать CLAUDE.md для вашего проекта. Проверьте, что там есть блок «Никогда».</li><li>Откройте новую сессию, попросите пост без пояснений — тон и правила должны соблюдаться сами.</li><li>Сделайте первый скилл «Пост из фото с занятия» (или другая ваша повторяющаяся задача) и проверьте его в новой сессии.</li></ol>
+<p>В чат: текст CLAUDE.md и название + описание скилла.</p>
+<h2 id="проверьте-себя">Проверьте себя</h2>
+<ol><li>Чем CLAUDE.md отличается от скилла?</li><li>Почему CLAUDE.md стоит держать коротким?</li><li>Какая фраза превращает удачную работу в скилл?</li><li>Что должно быть в описании скилла?</li></ol><div class="pager"><a href="/kontent-zavod/week-1/l2-2/"><small>← Урок 2.2</small>Как ставить задачу агенту</a><a class="next" href="/kontent-zavod/week-1/l2-4/"><small>Урок 2.4 →</small>Коннекторы</a></div></main></div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const t=b.nextElementSibling.innerText;try{await navigator.clipboard.writeText(t);b.textContent='Скопировано';setTimeout(()=>b.textContent='Копировать',1500)}catch(e){}}));
+const m=document.querySelector('.menu');if(m)m.addEventListener('click',()=>document.querySelector('aside').classList.toggle('open'));
+document.querySelectorAll('li.task input').forEach((c,i)=>{const k='task:'+location.pathname+':'+i;try{if(localStorage.getItem(k)==='1')c.checked=true}catch(e){}c.addEventListener('change',()=>{try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});
+</script></body></html>

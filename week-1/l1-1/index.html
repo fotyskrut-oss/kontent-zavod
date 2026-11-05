@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1.1 Как устроены нейросети — Контент-завод на Claude</title><meta name="description" content="Урок 1.1. Как устроены нейросети">
+<meta name="robots" content="noindex"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap"><style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#17171a;--muted:#5d5d66;--line:#e4e0d6;--accent:#e2532d;--accent-soft:#fbe6dd;--code:#1d1d22;--code-ink:#eceae4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121214;--card:#1b1b1f;--ink:#efede8;--muted:#a3a1a9;--line:#2c2c33;--accent:#ff7a52;--accent-soft:#3a2219;--code:#0b0b0d;--code-ink:#eceae4}}
+:root[data-theme="dark"]{--bg:#121214;--card:#1b1b1f;--ink:#efede8;--muted:#a3a1a9;--line:#2c2c33;--accent:#ff7a52;--accent-soft:#3a2219;--code:#0b0b0d;--code-ink:#eceae4}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Manrope,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--accent)}
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+.brand{font:700 15px/1.2 Unbounded,sans-serif;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand b{color:var(--accent)}
+.top nav{display:flex;gap:14px;font-size:14px}.top nav a{color:var(--muted);text-decoration:none}.top nav a:hover{color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px}
+aside{position:sticky;top:72px;align-self:start;max-height:calc(100vh - 90px);overflow:auto;font-size:14.5px}
+aside h4{font:600 12px/1.3 Unbounded,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
+aside a{display:block;padding:6px 10px;border-radius:8px;color:var(--ink);text-decoration:none;line-height:1.35}
+aside a:hover{background:var(--card)}aside a.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+aside a small{color:var(--muted);font-weight:500;margin-right:6px}
+main{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:40px clamp(18px,5vw,56px)}
+main h1{font:700 clamp(26px,4vw,38px)/1.15 Unbounded,sans-serif;letter-spacing:-.02em;margin:0 0 20px}
+main h2{font:700 22px/1.25 Unbounded,sans-serif;margin:44px 0 12px;letter-spacing:-.01em}
+main h3{font-size:18px;margin:28px 0 8px}
+main p,main li{max-width:72ch}
+main ul,main ol{padding-left:1.3em}main li{margin:6px 0}
+li.task{list-style:none;margin-left:-1.3em}li.task input{accent-color:var(--accent);width:17px;height:17px;vertical-align:-3px;margin-right:6px}
+code{font:500 .88em/1.4 "JetBrains Mono",ui-monospace,Consolas,monospace;background:var(--accent-soft);padding:1px 5px;border-radius:5px}
+.code{position:relative;margin:16px 0}
+.code pre{margin:0;background:var(--code);color:var(--code-ink);border-radius:12px;padding:18px 18px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.code pre code{background:none;padding:0;font-size:14px;line-height:1.6;color:inherit}
+.copy{position:absolute;top:8px;right:8px;font:600 12px Manrope,sans-serif;border:0;border-radius:7px;padding:5px 9px;background:#ffffff1f;color:#fff;cursor:pointer}
+.copy:hover{background:#ffffff38}
+.table{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{background:var(--bg);font-weight:700}tr:last-child td{border-bottom:0}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+.pager a{flex:1;max-width:48%;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}.pager small{display:block;color:var(--muted);font-size:13px}.pager .next{text-align:right;margin-left:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:16px 0 8px}
+.cards a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);background:var(--bg)}
+.cards a:hover{border-color:var(--accent)}.cards small{color:var(--accent);font-weight:700;display:block}
+.lead{font-size:18px;color:var(--muted)}
+.menu{display:none}
+@media (max-width:860px){.wrap{grid-template-columns:1fr;gap:16px}aside{position:static;max-height:none;display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px 12px}aside.open{display:block}.menu{display:inline-block;font:600 14px Manrope,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:6px 12px}.top nav{display:none}main{padding:28px 18px}}
+</style></head>
+<body>
+<header class="top"><div class="in"><a class="brand" href="/kontent-zavod/">Контент-завод <b>на Claude</b></a>
+<nav><a href="/kontent-zavod/">О курсе</a><a href="/kontent-zavod/week-1/">Неделя 1</a></nav><button class="menu" type="button">Уроки</button></div></header>
+<div class="wrap"><aside>
+<h4>Неделя 1</h4><a href="/kontent-zavod/week-1/">Обзор, шпаргалка и 20 шаблонов</a>
+<h4>Модуль 1. База нейросетей</h4><a href="/kontent-zavod/week-1/l1-1/" class="on"><small>1.1</small>Как устроены нейросети</a><a href="/kontent-zavod/week-1/l1-2/"><small>1.2</small>Какая нейросеть для чего</a><a href="/kontent-zavod/week-1/l1-3/"><small>1.3</small>Промпт, который работает</a><a href="/kontent-zavod/week-1/l1-4/"><small>1.4</small>Картинки, голос, видео</a><a href="/kontent-zavod/week-1/l1-5/"><small>1.5</small>Права, данные и честность</a><a href="/kontent-zavod/week-1/l1-6/"><small>1.6</small>Своя библиотека промптов</a>
+<h4>Модуль 2. Claude Code</h4><a href="/kontent-zavod/week-1/l2-1/"><small>2.1</small>Установка Claude Code</a><a href="/kontent-zavod/week-1/l2-2/"><small>2.2</small>Как ставить задачу агенту</a><a href="/kontent-zavod/week-1/l2-3/"><small>2.3</small>CLAUDE.md и скиллы</a><a href="/kontent-zavod/week-1/l2-4/"><small>2.4</small>Коннекторы</a><a href="/kontent-zavod/week-1/l2-5/"><small>2.5</small>Когда что-то сломалось</a><a href="/kontent-zavod/week-1/l2-6/"><small>2.6</small>Практикум</a>
+</aside><main><h1 id="урок-11-как-устроены-нейросети">Урок 1.1. Как устроены нейросети</h1>
+<p>В этом уроке вы поймёте, что на самом деле происходит, когда вы пишете нейросети, почему она иногда отвечает блестяще, а иногда уверенно ошибается, и как этим управлять. Без математики — только то, что нужно для работы.</p>
+<h2 id="что-такое-языковая-модель">Что такое языковая модель</h2>
+<p>Claude, ChatGPT, Gemini и DeepSeek — это <strong>большие языковые модели</strong>. Они обучались на огромном объёме текстов: книги, статьи, сайты, код, диалоги. Из этих текстов модель усвоила закономерности: как строятся предложения, как рассуждают люди, как выглядит хороший пост или договор.</p>
+<p>Когда вы пишете запрос, модель не ищет готовый ответ в базе. Она <strong>строит ответ по кусочкам</strong>: смотрит на весь текст выше и выбирает, какое продолжение самое подходящее, потом следующее, и так до конца ответа.</p>
+<p>Удобная аналогия — <strong>очень начитанный стажёр в первый день работы</strong>. Он читал про всё на свете, быстро пишет и никогда не устаёт. Но он ничего не знает про ваше дело, ваших клиентов и ваш стиль, пока вы не расскажете. И если чего-то не знает, может стесняться спросить и придумать правдоподобный ответ.</p>
+<h2 id="токены-в-чём-модель-считает-текст">Токены: в чём модель считает текст</h2>
+<p>Модель читает не буквы и не слова, а <strong>токены</strong> — кусочки текста. Короткое частое слово может быть одним токеном, длинное или редкое режется на несколько. Русский текст обычно занимает больше токенов, чем английский того же смысла.</p>
+<p>Почему это важно вам: в токенах считаются лимиты подписок и длина «памяти» чата. Очень длинные диалоги и большие файлы быстрее расходуют лимит.</p>
+<h2 id="контекст-память-в-пределах-чата">Контекст: память в пределах чата</h2>
+<p><strong>Контекст</strong> — это всё, что модель «видит» в данный момент: ваши сообщения, её ответы, прикреплённые файлы. Три практических следствия:</p>
+<ol><li><strong>Новый чат = чистый лист.</strong> Модель не помнит вчерашний разговор (если в сервисе не включена отдельная функция памяти). Поэтому мы делаем «паспорт дела» и вставляем его в начало работы или сохраняем в проект.</li><li><strong>Один чат = одна тема.</strong> Если в одном чате и посты, и договор, и рецепт борща, модель начинает путаться. Новая задача — новый чат.</li><li><strong>В очень длинном чате ранние детали теряются.</strong> Если модель «забыла» договорённость из начала — напомните или начните новый чат с короткой сводкой: «Сделай сводку нашего разговора для нового чата».</li></ol>
+<h2 id="знания-модели-и-свежие-события">Знания модели и свежие события</h2>
+<p>Модель знает мир до даты, на которой закончилось её обучение. Про новые законы, цены и тренды она может не знать — если у неё нет доступа к поиску в интернете. Всё, что зависит от даты, проверяйте.</p>
+<h2 id="почему-нейросеть-врёт">Почему нейросеть «врёт»</h2>
+<p>Модель стремится дать <strong>правдоподобный</strong> ответ, а не обязательно истинный. Если точного знания нет, она может собрать убедительную выдумку: несуществующую статью закона, цифру с потолка, ссылку, которая не открывается. Это называют <strong>галлюцинациями</strong>.</p>
+<p>Как защищаться:</p>
+<ul><li>Давайте модели факты сами (прайс, описание услуг, данные), а не просите её их вспомнить.</li><li>Просите: «Отметь, в чём ты не уверен» или «Если не знаешь — скажи, что не знаешь».</li><li>Цифры, даты, имена, законы, медицинские и юридические утверждения — всегда проверяйте по надёжному источнику.</li></ul>
+<h2 id="каждый-ответ-разный-—-и-это-хорошо">Каждый ответ разный — и это хорошо</h2>
+<p>На один и тот же запрос модель каждый раз отвечает немного по-другому. Для контента это плюс: можно попросить 5 вариантов заголовка и выбрать лучший. Не понравилось — не переписывайте сами, а скажите, что именно не так.</p>
+<h2 id="что-нейросети-делают-хорошо-а-что-плохо">Что нейросети делают хорошо, а что плохо</h2>
+<div class="table"><table><thead><tr><th>Хорошо</th><th>Плохо или с проверкой</th></tr></thead><tbody><tr><td>Черновики текстов, посты, сценарии</td><td>Точные факты, цифры, даты без источника</td></tr><tr><td>Идеи и мозговой штурм</td><td>Медицинские и юридические советы</td></tr><tr><td>Сократить, переписать, сменить тон</td><td>Свежие новости и цены</td></tr><tr><td>Структура: планы, таблицы, чек-листы</td><td>Ваш личный опыт и истории — их даёте вы</td></tr><tr><td>Объяснить сложное простым языком</td><td>Подсчёт больших чисел в уме (лучше через таблицу или Claude Code)</td></tr></tbody></table></div>
+<h2 id="типичные-ошибки-новичков">Типичные ошибки новичков</h2>
+<ul><li>Писать одной строкой «напиши пост» и расстраиваться, что вышло безлико.</li><li>Верить любой цифре в ответе.</li><li>Держать всё в одном бесконечном чате.</li><li>Переписывать ответ вручную вместо того, чтобы попросить правку.</li><li>Вставлять личные данные клиентов (имена, телефоны, диагнозы).</li></ul>
+<h2 id="практика-20-минут">Практика (20 минут)</h2>
+<ol><li>Спросите нейросеть: «Что ты знаешь о [название вашего дела]?» Посмотрите, честно ли она отвечает или фантазирует.</li><li>В новом чате дайте два абзаца о своём деле и задайте тот же вопрос. Сравните.</li><li>Попросите один и тот же заголовок поста три раза подряд — увидите, что ответы разные.</li><li>Спросите про что-то, что вы знаете точно (цена вашей услуги, дата открытия), и проверьте, не выдумает ли она.</li></ol>
+<p>Итог практики в чат: один пример, где нейросеть ошиблась, и один, где ответ стал лучше после контекста.</p>
+<h2 id="проверьте-себя">Проверьте себя</h2>
+<ol><li>Почему модель не знает ничего о вашем центре, даже если вы вчера рассказали ей в другом чате?</li><li>Что такое галлюцинация и как снизить её риск?</li><li>Когда лучше начать новый чат?</li><li>Какие данные нельзя вставлять в нейросеть?</li></ol><div class="pager"><a href="/kontent-zavod/week-1/"><small>←</small>Обзор недели</a><a class="next" href="/kontent-zavod/week-1/l1-2/"><small>Урок 1.2 →</small>Какая нейросеть для чего</a></div></main></div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const t=b.nextElementSibling.innerText;try{await navigator.clipboard.writeText(t);b.textContent='Скопировано';setTimeout(()=>b.textContent='Копировать',1500)}catch(e){}}));
+const m=document.querySelector('.menu');if(m)m.addEventListener('click',()=>document.querySelector('aside').classList.toggle('open'));
+document.querySelectorAll('li.task input').forEach((c,i)=>{const k='task:'+location.pathname+':'+i;try{if(localStorage.getItem(k)==='1')c.checked=true}catch(e){}c.addEventListener('change',()=>{try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});
+</script></body></html>

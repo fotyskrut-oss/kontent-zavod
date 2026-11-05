@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Неделя 1 — Контент-завод на Claude</title><meta name="description" content="Материалы первой недели: база нейросетей и Claude Code">
+<meta name="robots" content="noindex"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap"><style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#17171a;--muted:#5d5d66;--line:#e4e0d6;--accent:#e2532d;--accent-soft:#fbe6dd;--code:#1d1d22;--code-ink:#eceae4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121214;--card:#1b1b1f;--ink:#efede8;--muted:#a3a1a9;--line:#2c2c33;--accent:#ff7a52;--accent-soft:#3a2219;--code:#0b0b0d;--code-ink:#eceae4}}
+:root[data-theme="dark"]{--bg:#121214;--card:#1b1b1f;--ink:#efede8;--muted:#a3a1a9;--line:#2c2c33;--accent:#ff7a52;--accent-soft:#3a2219;--code:#0b0b0d;--code-ink:#eceae4}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Manrope,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--accent)}
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+.brand{font:700 15px/1.2 Unbounded,sans-serif;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand b{color:var(--accent)}
+.top nav{display:flex;gap:14px;font-size:14px}.top nav a{color:var(--muted);text-decoration:none}.top nav a:hover{color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px}
+aside{position:sticky;top:72px;align-self:start;max-height:calc(100vh - 90px);overflow:auto;font-size:14.5px}
+aside h4{font:600 12px/1.3 Unbounded,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
+aside a{display:block;padding:6px 10px;border-radius:8px;color:var(--ink);text-decoration:none;line-height:1.35}
+aside a:hover{background:var(--card)}aside a.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+aside a small{color:var(--muted);font-weight:500;margin-right:6px}
+main{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:40px clamp(18px,5vw,56px)}
+main h1{font:700 clamp(26px,4vw,38px)/1.15 Unbounded,sans-serif;letter-spacing:-.02em;margin:0 0 20px}
+main h2{font:700 22px/1.25 Unbounded,sans-serif;margin:44px 0 12px;letter-spacing:-.01em}
+main h3{font-size:18px;margin:28px 0 8px}
+main p,main li{max-width:72ch}
+main ul,main ol{padding-left:1.3em}main li{margin:6px 0}
+li.task{list-style:none;margin-left:-1.3em}li.task input{accent-color:var(--accent);width:17px;height:17px;vertical-align:-3px;margin-right:6px}
+code{font:500 .88em/1.4 "JetBrains Mono",ui-monospace,Consolas,monospace;background:var(--accent-soft);padding:1px 5px;border-radius:5px}
+.code{position:relative;margin:16px 0}
+.code pre{margin:0;background:var(--code);color:var(--code-ink);border-radius:12px;padding:18px 18px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.code pre code{background:none;padding:0;font-size:14px;line-height:1.6;color:inherit}
+.copy{position:absolute;top:8px;right:8px;font:600 12px Manrope,sans-serif;border:0;border-radius:7px;padding:5px 9px;background:#ffffff1f;color:#fff;cursor:pointer}
+.copy:hover{background:#ffffff38}
+.table{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{background:var(--bg);font-weight:700}tr:last-child td{border-bottom:0}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+.pager a{flex:1;max-width:48%;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}.pager small{display:block;color:var(--muted);font-size:13px}.pager .next{text-align:right;margin-left:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:16px 0 8px}
+.cards a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);background:var(--bg)}
+.cards a:hover{border-color:var(--accent)}.cards small{color:var(--accent);font-weight:700;display:block}
+.lead{font-size:18px;color:var(--muted)}
+.menu{display:none}
+@media (max-width:860px){.wrap{grid-template-columns:1fr;gap:16px}aside{position:static;max-height:none;display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px 12px}aside.open{display:block}.menu{display:inline-block;font:600 14px Manrope,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:6px 12px}.top nav{display:none}main{padding:28px 18px}}
+</style></head>
+<body>
+<header class="top"><div class="in"><a class="brand" href="/kontent-zavod/">Контент-завод <b>на Claude</b></a>
+<nav><a href="/kontent-zavod/">О курсе</a><a href="/kontent-zavod/week-1/">Неделя 1</a></nav><button class="menu" type="button">Уроки</button></div></header>
+<div class="wrap"><aside>
+<h4>Неделя 1</h4><a href="/kontent-zavod/week-1/" class="on">Обзор, шпаргалка и 20 шаблонов</a>
+<h4>Модуль 1. База нейросетей</h4><a href="/kontent-zavod/week-1/l1-1/"><small>1.1</small>Как устроены нейросети</a><a href="/kontent-zavod/week-1/l1-2/"><small>1.2</small>Какая нейросеть для чего</a><a href="/kontent-zavod/week-1/l1-3/"><small>1.3</small>Промпт, который работает</a><a href="/kontent-zavod/week-1/l1-4/"><small>1.4</small>Картинки, голос, видео</a><a href="/kontent-zavod/week-1/l1-5/"><small>1.5</small>Права, данные и честность</a><a href="/kontent-zavod/week-1/l1-6/"><small>1.6</small>Своя библиотека промптов</a>
+<h4>Модуль 2. Claude Code</h4><a href="/kontent-zavod/week-1/l2-1/"><small>2.1</small>Установка Claude Code</a><a href="/kontent-zavod/week-1/l2-2/"><small>2.2</small>Как ставить задачу агенту</a><a href="/kontent-zavod/week-1/l2-3/"><small>2.3</small>CLAUDE.md и скиллы</a><a href="/kontent-zavod/week-1/l2-4/"><small>2.4</small>Коннекторы</a><a href="/kontent-zavod/week-1/l2-5/"><small>2.5</small>Когда что-то сломалось</a><a href="/kontent-zavod/week-1/l2-6/"><small>2.6</small>Практикум</a>
+</aside><main><h1>Неделя 1: база нейросетей и Claude Code</h1>
+<p class="lead">Материалы ученика. Сначала уроки по порядку, затем практика и задания недели внизу этой страницы.</p>
+<h2>Модуль 1. База нейросетей</h2><div class="cards"><a href="/kontent-zavod/week-1/l1-1/"><small>Урок 1.1</small>Как устроены нейросети</a><a href="/kontent-zavod/week-1/l1-2/"><small>Урок 1.2</small>Какая нейросеть для чего</a><a href="/kontent-zavod/week-1/l1-3/"><small>Урок 1.3</small>Промпт, который работает</a><a href="/kontent-zavod/week-1/l1-4/"><small>Урок 1.4</small>Картинки, голос, видео</a><a href="/kontent-zavod/week-1/l1-5/"><small>Урок 1.5</small>Права, данные и честность</a><a href="/kontent-zavod/week-1/l1-6/"><small>Урок 1.6</small>Своя библиотека промптов</a></div>
+<h2>Модуль 2. Claude Code</h2><div class="cards"><a href="/kontent-zavod/week-1/l2-1/"><small>Урок 2.1</small>Установка Claude Code</a><a href="/kontent-zavod/week-1/l2-2/"><small>Урок 2.2</small>Как ставить задачу агенту</a><a href="/kontent-zavod/week-1/l2-3/"><small>Урок 2.3</small>CLAUDE.md и скиллы</a><a href="/kontent-zavod/week-1/l2-4/"><small>Урок 2.4</small>Коннекторы</a><a href="/kontent-zavod/week-1/l2-5/"><small>Урок 2.5</small>Когда что-то сломалось</a><a href="/kontent-zavod/week-1/l2-6/"><small>Урок 2.6</small>Практикум</a></div>
+<h2 id="неделя-1-коротко">Неделя 1 коротко</h2>
+<p>Эта неделя — база: вы научитесь ставить нейросетям задачи так, чтобы они давали готовый результат для вашего дела, и установите Claude Code — нейросеть, которая сама работает с файлами.</p>
+<div class="table"><table><thead><tr><th>Урок</th><th>Тема</th><th>Раздел ниже</th></tr></thead><tbody><tr><td>1.1</td><td>Как устроены нейросети</td><td>Шпаргалка</td></tr><tr><td>1.2</td><td>Claude, ChatGPT, Gemini, DeepSeek: что для чего</td><td>Шпаргалка</td></tr><tr><td>1.3</td><td>Промпт, который работает</td><td>Формула промпта</td></tr><tr><td>1.4</td><td>Картинки, голос, видео</td><td>Картинки, голос, видео</td></tr><tr><td>1.5</td><td>Права и честность</td><td>Картинки, голос, видео</td></tr><tr><td>1.6</td><td>Библиотека из 20 промптов</td><td>Библиотека</td></tr><tr><td>2.1–2.6</td><td>Claude Code: установка, задачи, правила, ошибки</td><td>Claude Code</td></tr></tbody></table></div>
+<p>К концу недели у вас будет: паспорт вашего дела, библиотека из 20 рабочих промптов, первые опубликованные посты и работающий Claude Code на компьютере. Вопросы — в чат в любое время.</p>
+<h2 id="шпаргалка-как-устроены-нейросети-и-какая-для-чего">Шпаргалка: как устроены нейросети и какая для чего</h2>
+<p><strong>Четыре факта, которые нужно помнить:</strong></p>
+<ol><li><strong>Нейросеть продолжает текст.</strong> Она не ищет ответ в базе, а строит самый подходящий ответ слово за словом. Чем точнее запрос, тем точнее ответ.</li><li><strong>Токены и контекст.</strong> Текст режется на кусочки-токены. Контекст — всё, что нейросеть «видит» в текущем чате. В новом чате она ничего не помнит о вас, пока вы не дадите паспорт своего дела.</li><li><strong>Она может уверенно ошибаться.</strong> Цифры, имена, ссылки, законы, медицинские факты — проверяйте всегда.</li><li><strong>Ответ каждый раз разный.</strong> Не понравилось — попросите ещё вариант или скажите, что именно не так.</li></ol>
+<p><strong>Какая нейросеть для чего:</strong></p>
+<div class="table"><table><thead><tr><th>Задача</th><th>Инструмент</th><th>Совет</th></tr></thead><tbody><tr><td>Посты, планы, ответы клиентам, сценарии</td><td>Claude</td><td>наш основной инструмент</td></tr><tr><td>Второе мнение, идеи по-другому</td><td>ChatGPT, Gemini, DeepSeek</td><td>полезно сравнивать на одном запросе</td></tr><tr><td>Работа с файлами, автоматизация, публикация</td><td>Claude Code</td><td>он не только отвечает, но и делает</td></tr><tr><td>Голос за кадром</td><td>ElevenLabs</td><td>выберите один голос и держитесь его</td></tr><tr><td>Картинки, обложки</td><td>Gemini, ChatGPT, Qwen</td><td>текст на картинку добавляйте отдельно</td></tr><tr><td>Анимация и ролики</td><td>наш движок через Claude Code</td><td>неделя 2</td></tr></tbody></table></div>
+<p>Подписки: для старта хватит бесплатных версий; для Claude Code нужна платная подписка Claude. Актуальные цены смотрите на сайтах сервисов — они меняются.</p>
+<h2 id="формула-промпта">Формула промпта</h2>
+<p>Хороший запрос состоит из пяти частей. Чем больше из них вы заполните, тем меньше переделок.</p>
+<div class="table"><table><thead><tr><th>Часть</th><th>Вопрос к себе</th><th>Пример</th></tr></thead><tbody><tr><td>Роль</td><td>Кем должна быть нейросеть?</td><td>«Ты контент-маркетолог детского центра»</td></tr><tr><td>Контекст</td><td>Что она должна знать о вас и клиентах?</td><td>паспорт вашего дела</td></tr><tr><td>Задача</td><td>Что именно сделать?</td><td>«Напиши пост про первое занятие»</td></tr><tr><td>Формат</td><td>Как должен выглядеть результат?</td><td>«До 900 знаков, крючок, 3 пункта, приглашение»</td></tr><tr><td>Пример</td><td>Есть ли образец тона или стиля?</td><td>ваш удачный прошлый пост</td></tr></tbody></table></div>
+<p><strong>Десять приёмов доработки — пишите их в тот же чат после ответа:</strong></p>
+<ol><li>«Дай 3 варианта первой строки»</li><li>«Сократи вдвое, смысл сохрани»</li><li>«Напиши проще, как сказал бы живой человек»</li><li>«Убери штампы и восклицания»</li><li>«Задай мне 5 вопросов, чтобы написать лучше»</li><li>«Что в этом тексте может оттолкнуть читателя?»</li><li>«Перепиши под Telegram / VK / Instagram»</li><li>«Сделай из этого сценарий ролика на 30 секунд»</li><li>«Проверь факты и отметь, в чём ты не уверен»</li><li>«Оформи таблицей»</li></ol>
+<h2 id="библиотека-20-шаблонов-промптов">Библиотека: 20 шаблонов промптов</h2>
+<p>Перед каждым шаблоном вставляйте паспорт своего дела. В квадратных скобках — то, что нужно подставить. Сохраняйте удачные версии в свои заметки.</p>
+<p><strong>Планирование</strong></p>
+<ol><li>«Составь контент-план на [неделю/месяц] для [площадки]: рубрики, даты, формат, тема, первая фраза. Таблицей.»</li><li>«Придумай 20 тем постов на основе частых вопросов моих клиентов: [список вопросов].»</li><li>«Предложи 5 рубрик для моего канала и объясни, зачем каждая нужна клиенту.»</li><li>«Вот 3 конкурента [ссылки или описание]. Что они делают хорошо и чего у них нет?»</li></ol>
+<p><strong>Тексты</strong></p>
+<ol><li>«Напиши пост на тему [тема]: крючок, 3 пункта, призыв. До [N] знаков. Тон [тон].»</li><li>«Дай 10 вариантов заголовка для поста про [тема], часть — вопросом, часть — с цифрой.»</li><li>«Сделай карусель на 7 слайдов про [тема]: текст каждого слайда до 20 слов + идея картинки.»</li><li>«Напиши сценарий ролика на 30 секунд: крючок за 2 секунды, 3 смысловых блока, финал. Колонками: текст за кадром и что на экране.»</li><li>«Перепиши этот текст под Telegram, VK и Instagram — три версии: [текст].»</li><li>«Напиши подпись к ролику и закреплённый комментарий-вопрос, на который захочется ответить.»</li></ol>
+<p><strong>Клиенты</strong></p>
+<ol><li>«Составь вежливый ответ на комментарий: [комментарий]. До 3 предложений, без рекламы.»</li><li>«Ответь на недовольный отзыв спокойно: признай проблему, предложи решение: [отзыв].»</li><li>«Напиши FAQ из 10 вопросов и ответов для новых клиентов.»</li><li>«Напиши первое сообщение человеку, который оставил заявку: тёплое, с одним вопросом.»</li><li>«Составь скрипт первой бесплатной консультации на 20 минут: вопросы и порядок.»</li></ol>
+<p><strong>Анализ и работа</strong></p>
+<ol><li>«Вот статистика моих постов [цифры]. Какие сработали лучше и почему? Что делать дальше?»</li><li>«Проверь текст на ошибки, спорные утверждения и то, что может обидеть читателя.»</li><li>«Сделай краткое содержание этого документа в 5 пунктах: [текст].»</li><li>«Составь план на день из этих задач, важное вперёд: [список].»</li><li>«Ты мой критик: разбери мою идею [идея] и назови 3 слабых места.»</li></ol>
+<h2 id="картинки-голос-видео-права">Картинки, голос, видео, права</h2>
+<p><strong>Картинки (урок 1.4).</strong> Описывайте сцену как фотограф: что в кадре, ракурс, свет, стиль, формат (9:16 для сторис и роликов, 4:5 для постов). Всегда добавляйте «без текста на картинке» — буквы нейросети часто искажают, текст добавляйте в редакторе. Держите один стиль для всех картинок — так канал узнают.</p>
+<p><strong>Голос (урок 1.4).</strong> В ElevenLabs выберите один голос для канала. Пишите текст короткими фразами, числа — словами, каждая реплика — отдельным абзацем. Слушайте результат целиком перед публикацией.</p>
+<p><strong>Видео (урок 1.4).</strong> Короткие ролики мы делаем анимацией на нашем движке (неделя 2): это стабильнее и дешевле, чем генераторы видео, и даёт свой стиль. Первые 2 секунды решают, досмотрят ли ролик.</p>
+<p><strong>Права и честность (урок 1.5) — чек-лист перед каждой публикацией:</strong></p>
+<ul><li class="task"><label><input type="checkbox"> <span>Факты, цифры и советы проверены; медицинские — согласованы со специалистом</span></label></li><li class="task"><label><input type="checkbox"> <span>Нет обещаний вылечить, гарантированных результатов и диагнозов</span></label></li><li class="task"><label><input type="checkbox"> <span>Фото и видео людей (особенно детей) — только с письменного согласия</span></label></li><li class="task"><label><input type="checkbox"> <span>В нейросеть не отправляются имена, телефоны и личные данные клиентов</span></label></li><li class="task"><label><input type="checkbox"> <span>Реалистичный синтетический контент помечен меткой «Создано ИИ» на площадке</span></label></li><li class="task"><label><input type="checkbox"> <span>Нет чужих логотипов, музыки и роликов без прав</span></label></li><li class="task"><label><input type="checkbox"> <span>Реклама помечена как реклама</span></label></li><li class="task"><label><input type="checkbox"> <span>У сервиса картинок или голоса разрешено коммерческое использование на вашем тарифе</span></label></li></ul>
+<h2 id="claude-code-установка-и-первые-задачи">Claude Code: установка и первые задачи</h2>
+<p>Claude Code — это Claude, который работает прямо на вашем компьютере: создаёт и меняет файлы, запускает программы, подключается к сервисам. Вы пишете задачу обычными словами, он делает и показывает результат.</p>
+<p><strong>Установка (урок 2.1):</strong></p>
+<ol><li>Оформите платную подписку Claude на claude.ai.</li><li>Скачайте приложение Claude для компьютера с официального сайта и войдите в аккаунт.</li><li>Откройте вкладку Code и выберите папку для работы — создайте на рабочем столе папку «Мой контент».</li><li>Первая команда: «Привет! Создай в этой папке файл с паспортом моего дела» — и вставьте паспорт.</li><li>Если что-то не ставится — скриншот ошибки в чат, разберёмся вместе.</li></ol>
+<p><strong>Как ставить задачу агенту (урок 2.2):</strong> цель → что уже есть → какой результат нужен → что нельзя трогать. Пример: «Сделай таблицу с контент-планом на ноябрь по паспорту из файла паспорт.md. Колонки: дата, площадка, формат, тема, статус. Файлы, которые уже есть, не удаляй». Проверяйте результат и просите правки в том же чате.</p>
+<p><strong>Правила для Claude — файл CLAUDE.md (урок 2.3).</strong> Положите в папку файл CLAUDE.md — Claude читает его в начале каждой работы. Шаблон:</p>
+<div class="code"><button class="copy" type="button">Копировать</button><pre><code># О моём деле
+[паспорт]
+
+# Как писать
+- Тон: [тёплый, спокойный]
+- Короткие фразы, без штампов
+- Нельзя: [диагнозы, обещания, личные данные]
+
+# Где что лежит
+- планы/ — контент-планы
+- посты/ — готовые тексты</code></pre></div>
+<p><strong>Коннекторы (урок 2.4):</strong> через них Claude подключается к документам, браузеру, сервисам публикации и статистики. На этой неделе подключим один — для документов; сервис автопубликации — на неделе 3.</p>
+<p><strong>Когда что-то сломалось (урок 2.5):</strong> скопируйте ошибку целиком и напишите Claude: «Вот ошибка. Объясни простыми словами, что случилось, и исправь». Не соглашайтесь на удаление файлов, если не понимаете зачем, — спросите в чате.</p>
+<p><strong>Практика (урок 2.6):</strong> попросите Claude Code сделать три вещи: документ с прайсом или описанием услуг, таблицу с контент-планом и простую страницу «о нас», которую можно открыть в браузере.</p>
+<h2 id="задания-недели">Задания недели</h2>
+<p>Отмечайте галочки прямо здесь, результаты — в чат. В сумме около 5–6 часов за неделю.</p>
+<p><strong>Модуль 1 — база нейросетей</strong></p>
+<ul><li class="task"><label><input type="checkbox"> <span>Паспорт дела доработан и сохранён</span></label></li><li class="task"><label><input type="checkbox"> <span>Один запрос дан Claude, ChatGPT и Gemini, в чат — чей ответ лучше и почему</span></label></li><li class="task"><label><input type="checkbox"> <span>3 поста написаны с Claude, один опубликован</span></label></li><li class="task"><label><input type="checkbox"> <span>1 картинка для поста сгенерирована и проверена по чек-листу</span></label></li><li class="task"><label><input type="checkbox"> <span>1 озвучка 30 секунд в ElevenLabs (текст любого поста)</span></label></li><li class="task"><label><input type="checkbox"> <span>Библиотека: 20 своих промптов на основе шаблонов, сохранены в заметках</span></label></li></ul>
+<p><strong>Модуль 2 — Claude Code</strong></p>
+<ul><li class="task"><label><input type="checkbox"> <span>Подписка Claude оформлена, приложение установлено</span></label></li><li class="task"><label><input type="checkbox"> <span>Папка «Мой контент» с файлом CLAUDE.md</span></label></li><li class="task"><label><input type="checkbox"> <span>Claude Code сделал документ, таблицу и страницу «о нас»</span></label></li><li class="task"><label><input type="checkbox"> <span>Скриншот сделанного — в чат</span></label></li></ul>
+<p>Если что-то не получается больше 20 минут — не сидите над этим, пишите в чат.</p></main></div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const t=b.nextElementSibling.innerText;try{await navigator.clipboard.writeText(t);b.textContent='Скопировано';setTimeout(()=>b.textContent='Копировать',1500)}catch(e){}}));
+const m=document.querySelector('.menu');if(m)m.addEventListener('click',()=>document.querySelector('aside').classList.toggle('open'));
+document.querySelectorAll('li.task input').forEach((c,i)=>{const k='task:'+location.pathname+':'+i;try{if(localStorage.getItem(k)==='1')c.checked=true}catch(e){}c.addEventListener('change',()=>{try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});
+</script></body></html>

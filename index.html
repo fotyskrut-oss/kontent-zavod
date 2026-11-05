@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Контент-завод на Claude</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+  /* Layout: dark cinematic single column, a survival-HUD frame (place tag + running clock) around real footage */
+  :root {
+    --bg: #0a1417;        /* night shaft teal-black */
+    --panel: #111f24;
+    --line: #23363d;
+    --fg: #e8eef0;
+    --muted: #93a6ad;
+    --amber: #ffb85c;     /* emergency-lamp amber, the one accent */
+    --red: #ff4d42;       /* HUD alert */
+    --green: #4fd38a;
+    --display: 'Unbounded', 'Arial Black', system-ui, sans-serif;
+    --body: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 18px; line-height: 1.6;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1360px; margin: 0 auto; padding-block: 32px 96px; display: grid; gap: 110px; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+  h1 { font-size: clamp(32px, 5.6vw, 76px); line-height: 1.05; font-weight: 900; }
+  h2 { font-size: clamp(26px, 3.8vw, 48px); line-height: 1.12; font-weight: 700; }
+  h3 { font-size: 20px; line-height: 1.3; font-weight: 700; }
+  p { margin: 0; max-width: 70ch; }
+  .muted { color: var(--muted); }
+  .eyebrow { font-family: var(--mono); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .eyebrow b { color: var(--red); font-weight: 700; }
+  .accent { color: var(--amber); }
+  section { display: grid; gap: 28px; }
+
+  /* HUD bar */
+  .hud { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .12em; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+  .hud .clock { color: var(--fg); font-size: 16px; display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+  .rec { width: 9px; height: 9px; border-radius: 50%; background: var(--red); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* hero */
+  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 64px; align-items: center; min-height: 70vh; }
+  .hero-copy { display: grid; gap: 28px; min-width: 0; }
+  .lead { font-size: 21px; color: var(--muted); }
+  .lead strong { color: var(--fg); font-weight: 700; }
+  .phones { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 620px; justify-self: end; width: 100%; }
+  .phone { position: relative; aspect-ratio: 9 / 16; max-width: 100%; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: #000; }
+  .phone:nth-child(2) { transform: translateY(40px); }
+  .phone video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .phone figcaption { position: absolute; left: 10px; bottom: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; background: rgba(5,10,12,.78); padding: 4px 8px; border-radius: 6px; color: var(--fg); }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .btn { font-family: var(--display); font-weight: 700; font-size: 17px; background: var(--amber); color: #1b1106; border: 0; border-radius: 14px; padding: 18px 26px; text-decoration: none; display: inline-block; }
+
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .facts div { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 2px; min-width: 0; }
+  .facts b { font-family: var(--display); font-size: clamp(30px, 3.6vw, 44px); color: var(--amber); font-variant-numeric: tabular-nums; }
+  .facts span { color: var(--muted); font-size: 15px; }
+  .modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .module { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px; display: grid; gap: 14px; grid-template-rows: auto 1fr auto; min-width: 0; }
+  .module header { display: grid; gap: 6px; }
+  .module .when { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--amber); text-transform: uppercase; }
+  .module ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 15px; line-height: 1.45; }
+  .module ol li::marker { font-family: var(--mono); color: var(--muted); }
+  .module .res { font-size: 14px; background: #0b171b; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .module .res b { color: var(--green); font-family: var(--mono); font-size: 12px; letter-spacing: .1em; display: block; }
+
+  .niche { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  .niche-plan { display: grid; gap: 8px; min-width: 0; }
+  .day { display: grid; grid-template-columns: 48px 120px 1fr; gap: 12px; align-items: baseline; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .day b { font-family: var(--mono); font-size: 13px; color: var(--amber); }
+  .day .fmt { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .day p { font-size: 15px; min-width: 0; }
+  .niche-notes { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+  .niche-notes ul { margin: 0; padding-left: 18px; display: grid; gap: 10px; font-size: 15px; }
+  .cmp-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+  .cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size: 15px; }
+  .cmp th, .cmp td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .cmp thead th { font-family: var(--display); font-size: 15px; font-weight: 700; }
+  .cmp tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .cmp .hl { background: rgba(255,184,92,.08); color: var(--fg); }
+  .cmp thead .hl { color: var(--amber); }
+  .cmp tr:last-child th, .cmp tr:last-child td { border-bottom: 0; }
+  .dfy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .pack { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .pack.main { border-color: var(--amber); }
+  .pack .when { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--amber); text-transform: uppercase; }
+  .pack .sum2 { font-family: var(--display); font-size: 32px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .pack .sum2 small { font-family: var(--body); font-size: 15px; font-weight: 500; color: var(--muted); }
+  .pack ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; }
+
+  /* results in 30 days */
+  .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .results div { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .results b { font-family: var(--display); font-size: 20px; }
+  .results span { color: var(--muted); font-size: 16px; }
+  .results i { font-style: normal; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--green); }
+
+  /* report: views per episode, bars to scale */
+  .report { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 28px; display: grid; gap: 18px; }
+  .report-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .legend { display: flex; gap: 18px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+  .bars { display: grid; gap: 7px; }
+  .bar { display: grid; grid-template-columns: minmax(150px, 300px) 1fr 70px; gap: 14px; align-items: center; font-size: 14px; }
+  .bar .name { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .bar .track { height: 18px; background: #0b171b; border-radius: 6px; overflow: hidden; }
+  .bar .fill { height: 100%; width: var(--w); background: var(--c); border-radius: 6px; }
+  .bar .v { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+  .insights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .insights p { font-size: 15px; border-left: 3px solid var(--amber); padding-left: 12px; color: var(--fg); }
+
+  /* funnel */
+  .funnel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: stretch; }
+  .funnel div { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .funnel div:not(:last-child)::after { content: "→"; position: absolute; right: -14px; top: 50%; transform: translateY(-50%); font-family: var(--mono); color: var(--amber); font-size: 18px; z-index: 1; }
+  .funnel b { font-family: var(--display); font-size: 16px; }
+  .funnel span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+
+  /* student's week */
+  .weekplan { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .weekplan div { border: 1px solid var(--line); border-radius: 14px; padding: 14px 12px; display: grid; gap: 6px; align-content: start; min-width: 0; font-size: 14px; }
+  .weekplan b { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--muted); }
+  .weekplan .call { border-color: var(--amber); }
+  .weekplan .call b { color: var(--amber); }
+  .btn:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+  .price-tag { font-family: var(--mono); font-size: 15px; color: var(--muted); }
+  .price-tag b { color: var(--fg); font-size: 20px; }
+
+  /* proof */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .stat { background: var(--panel); padding: 22px 20px; display: grid; gap: 6px; min-width: 0; }
+  .stat .n { font-family: var(--display); font-size: clamp(26px, 3.6vw, 38px); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 14px; color: var(--muted); }
+  .src { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+
+  /* pipeline */
+  .pipe { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; counter-reset: step; }
+  .pipe li { list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .pipe li::before { counter-increment: step; content: counter(step, decimal-leading-zero); font-family: var(--mono); font-size: 12px; color: var(--amber); }
+  .pipe b { font-family: var(--display); font-size: 15px; font-weight: 700; }
+  .pipe span { font-size: 14px; color: var(--muted); line-height: 1.45; }
+  ol.pipe { margin: 0; padding: 0; }
+
+  /* weeks */
+  .weeks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .week { border-top: 3px solid var(--line); padding-top: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .week:first-child { border-top-color: var(--amber); }
+  .week .when { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+  .week ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; }
+  .week .res { font-size: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .week .res b { color: var(--green); font-family: var(--mono); font-size: 12px; letter-spacing: .1em; display: block; }
+
+  /* lesson preview */
+  .lesson { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 32px; }
+  .lesson > div { display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .rule { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+  .rule i { font-style: normal; font-family: var(--mono); font-weight: 700; color: var(--bg); background: var(--amber); border-radius: 8px; height: 34px; display: grid; place-items: center; }
+  .compare { display: grid; gap: 10px; }
+  .bad, .good { border-radius: 12px; padding: 14px 16px; font-size: 15px; border: 1px solid var(--line); }
+  .bad { color: var(--muted); }
+  .bad::before { content: "Так листают дальше"; display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--red); margin-bottom: 4px; }
+  .good::before { content: "Так досматривают"; display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+  .good { border-color: rgba(79,211,138,.45); }
+  pre { margin: 0; background: #071012; border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-family: var(--mono); font-size: 13px; line-height: 1.55; color: #cfe0e4; overflow-x: auto; }
+  pre .k { color: var(--amber); } pre .s { color: #9fd8b8; } pre .c { color: var(--muted); }
+
+  /* offer */
+  .offer { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; }
+  .incl { display: grid; gap: 12px; margin: 0; padding: 0; }
+  .incl li { list-style: none; display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 16px; }
+  .incl li::before { content: "▸"; color: var(--amber); font-family: var(--mono); }
+  .price { background: var(--panel); border: 1px solid var(--amber); border-radius: 20px; padding: 28px; display: grid; gap: 14px; align-content: start; }
+  .price .sum { font-family: var(--display); font-size: 44px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .price small { color: var(--muted); font-size: 14px; }
+  .pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .pillars div { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .pillars b { font-family: var(--mono); font-size: 13px; letter-spacing: .08em; color: var(--amber); text-transform: uppercase; }
+  .pillars p { font-size: 15px; color: var(--muted); }
+  .need { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .need div { border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 4px; min-width: 0; }
+  .need b { font-family: var(--mono); font-size: 13px; letter-spacing: .08em; color: var(--amber); }
+  .fit { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fit div { display: grid; gap: 8px; }
+  .fit ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+
+  details { border-bottom: 1px solid var(--line); padding-block: 16px; }
+  summary { cursor: pointer; font-weight: 700; font-size: 17px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  summary::after { content: "+"; font-family: var(--mono); color: var(--amber); }
+  details[open] summary::after { content: "−"; }
+  details p { margin-top: 10px; color: var(--muted); }
+
+  .final { text-align: left; background: linear-gradient(180deg, var(--panel), var(--bg)); border: 1px solid var(--line); border-radius: 24px; padding: 40px 32px; display: grid; gap: 18px; }
+
+  @media (max-width: 860px) {
+    .hero, .lesson, .offer { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .pipe { grid-template-columns: repeat(2, 1fr); }
+    .weeks { grid-template-columns: repeat(2, 1fr); }
+    .need { grid-template-columns: 1fr; }
+    .pillars { grid-template-columns: repeat(2, 1fr); }
+    .modules { grid-template-columns: 1fr 1fr; }
+    .niche { grid-template-columns: 1fr; }
+    .dfy { grid-template-columns: 1fr; }
+    .facts { grid-template-columns: repeat(2, 1fr); }
+    .results, .insights { grid-template-columns: 1fr 1fr; }
+    .funnel { grid-template-columns: 1fr; }
+    .funnel div:not(:last-child)::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -16px; transform: translateX(-50%); }
+    .weekplan { grid-template-columns: repeat(4, 1fr); }
+    .hero { min-height: 0; }
+    .phones { justify-self: stretch; max-width: none; }
+    .bar { grid-template-columns: 120px 1fr 56px; }
+    .phone:nth-child(2) { transform: none; }
+  }
+  @media (max-width: 520px) {
+    .weeks, .fit, .pillars, .results, .insights, .modules { grid-template-columns: 1fr; }
+    .weekplan { grid-template-columns: repeat(2, 1fr); }
+    .day { grid-template-columns: 40px 1fr; }
+    .day p { grid-column: 1 / -1; }
+    .lesson { padding: 22px; }
+    .wrap { gap: 64px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .rec { animation: none; } }
+</style>
+
+<div class="wrap">
+  
+    <span>ДЕНЬ 1 · <b style="color:var(--red);font-weight:700">ТВОЙ КОНТЕНТ</b></span>
+    <span class="clock"><span class="rec" aria-hidden="true"></span><span id="clock">23:47:12</span></span>
+  
+
+  <section class="hero" aria-labelledby="h1">
+    <div class="hero-copy">
+      <span class="eyebrow">Наставничество · 1 месяц</span>
+      <h1 id="h1">Нейросети с&nbsp;нуля до&nbsp;своего контент-завода за&nbsp;30&nbsp;дней. <span class="accent">Ты руководишь, нейросети работают.</span></h1>
+      <p class="lead">Месяц работаем вместе. Начинаем с&nbsp;базы: как устроены нейросети и&nbsp;как ставить им задачи. Потом ты собираешь систему, в&nbsp;которой <strong>нейросети делают контент в&nbsp;твоей теме, ведут твои соцсети по&nbsp;расписанию и&nbsp;считают статистику</strong>, а&nbsp;ты строишь на&nbsp;этом воронку и&nbsp;продажи.</p>
+      <div class="cta-row">
+        <a class="btn" href="#offer">Что входит и&nbsp;цена</a>
+        <span class="price-tag"><b>30 000 ₽</b> за месяц</span>
+      </div>
+    </div>
+    <div class="phones">
+      <figure class="phone" style="margin:0">
+        <video src="demo_lift.mp4" poster="poster_lift.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Фрагмент сериала «Лифт»"></video>
+        <figcaption>ЛИФТ · ЧАСТЬ 1</figcaption>
+      </figure>
+      <figure class="phone" style="margin:0">
+        <video src="demo_train.mp4" poster="poster_train.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Фрагмент сериала «Поезд №9»"></video>
+        <figcaption>ПОЕЗД №9 · ЧАСТЬ 4</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="proof">
+    <span class="eyebrow">Пример: канал, сделанный этим методом</span>
+    <h2 id="proof">Новый канал. Четыре дня. Два сериала.</h2>
+    <div class="stats">
+      <div class="stat"><span class="n">47 000+</span><span class="l">просмотров в&nbsp;YouTube и&nbsp;TikTok за&nbsp;4 дня</span></div>
+      <div class="stat"><span class="n">8 200</span><span class="l">просмотров и&nbsp;621 лайк у&nbsp;«Лифта» ч.1 в&nbsp;TikTok</span></div>
+      <div class="stat"><span class="n">5 052</span><span class="l">просмотра у&nbsp;«Лифта» ч.1 на&nbsp;YouTube меньше чем за&nbsp;сутки</span></div>
+      <div class="stat"><span class="n">13</span><span class="l">серий двух сериалов + 2 фильма-сборника</span></div>
+    </div>
+    <span class="src">Источник: YouTube @f0tys_true (25 974 просмотра, 266 подписчиков) и&nbsp;TikTok-аккаунт (21 000+ просмотров, 1 400+ лайков по&nbsp;опубликованным роликам), данные на&nbsp;26–27.10.2026. TikTok показывает округлённые значения.</span>
+  </section>
+
+  <section aria-labelledby="report">
+    <span class="eyebrow">Так выглядит еженедельный отчёт</span>
+    <h2 id="report">Каждая серия — в&nbsp;цифрах</h2>
+    <div class="report">
+      <div class="report-head">
+        <h3>Просмотры по&nbsp;сериям, 23–26 октября</h3>
+        <div class="legend"><span style="--c:#5fa8c4">Поезд №9</span><span style="--c:var(--amber)">Лифт</span></div>
+      </div>
+      <div class="bars" role="list">
+        <div class="bar" role="listitem"><span class="name">Поезд №9 · ч.1</span><span class="track"><span class="fill" style="--w:56.1%;--c:#5fa8c4;display:block"></span></span><span class="v">2 833</span></div>
+        <div class="bar" role="listitem"><span class="name">Поезд №9 · ч.2</span><span class="track"><span class="fill" style="--w:40.8%;--c:#5fa8c4;display:block"></span></span><span class="v">2 059</span></div>
+        <div class="bar" role="listitem"><span class="name">Поезд №9 · ч.3</span><span class="track"><span class="fill" style="--w:43.3%;--c:#5fa8c4;display:block"></span></span><span class="v">2 190</span></div>
+        <div class="bar" role="listitem"><span class="name">Поезд №9 · ч.4</span><span class="track"><span class="fill" style="--w:24.1%;--c:#5fa8c4;display:block"></span></span><span class="v">1 218</span></div>
+        <div class="bar" role="listitem"><span class="name">Поезд №9 · ч.5</span><span class="track"><span class="fill" style="--w:34.3%;--c:#5fa8c4;display:block"></span></span><span class="v">1 735</span></div>
+        <div class="bar" role="listitem"><span class="name">Поезд №9 · ч.6</span><span class="track"><span class="fill" style="--w:29.7%;--c:#5fa8c4;display:block"></span></span><span class="v">1 498</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.1</span><span class="track"><span class="fill" style="--w:100%;--c:var(--amber);display:block"></span></span><span class="v">5 052</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.2</span><span class="track"><span class="fill" style="--w:43.4%;--c:var(--amber);display:block"></span></span><span class="v">2 192</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.3</span><span class="track"><span class="fill" style="--w:39.7%;--c:var(--amber);display:block"></span></span><span class="v">2 008</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.4</span><span class="track"><span class="fill" style="--w:34.9%;--c:var(--amber);display:block"></span></span><span class="v">1 762</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.5</span><span class="track"><span class="fill" style="--w:31.5%;--c:var(--amber);display:block"></span></span><span class="v">1 593</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.6</span><span class="track"><span class="fill" style="--w:24.3%;--c:var(--amber);display:block"></span></span><span class="v">1 228</span></div>
+        <div class="bar" role="listitem"><span class="name">Лифт · ч.7 (вышла сегодня)</span><span class="track"><span class="fill" style="--w:12%;--c:var(--amber);display:block"></span></span><span class="v">606</span></div>
+      </div>
+      <div class="insights">
+        <p>Первая серия сериала собирает больше всего: на&nbsp;неё приходят из&nbsp;ленты, дальше идут по&nbsp;цепочке.</p>
+        <p>«Лифт», часть 1 — 5 052 на&nbsp;YouTube и&nbsp;8 200 в&nbsp;TikTok: крючок в&nbsp;первой фразе сработал на&nbsp;обеих площадках.</p>
+        <p>Задача следующего сезона — удержать зрителя между частями. Где он уходит, видно в&nbsp;удержании, его разбираем каждую неделю.</p>
+      </div>
+      <span class="src">Источник: YouTube, просмотры на&nbsp;26.10.2026. Последние части ещё набирают.</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="sys">
+    <span class="eyebrow">Что ты соберёшь</span>
+    <h2 id="sys">Четыре части одной системы</h2>
+    <div class="pillars">
+      <div><b>01 · База нейросетей</b><p>Claude, ChatGPT, Gemini, нейросети для голоса и&nbsp;картинок. Как выбрать модель, написать промпт и&nbsp;поручить Claude Code настоящую работу.</p></div>
+      <div><b>02 · Контент в&nbsp;твоей теме</b><p>Ниша, контент-план, короткие видео, посты, карусели, анимация на&nbsp;нашем движке. Сериалы — один из&nbsp;форматов, не&nbsp;единственный.</p></div>
+      <div><b>03 · Автоведение соцсетей</b><p>Одна идея в&nbsp;пяти форматах, подписи под каждую площадку, расписание, ответы на&nbsp;комментарии на&nbsp;твоё одобрение, еженедельный отчёт.</p></div>
+      <div><b>04 · Деньги</b><p>Telegram-канал, бот с&nbsp;проверкой подписки, прогрев, разборы и&nbsp;продажа: заказы на&nbsp;ролики, интеграции, свой продукт.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="res">
+    <span class="eyebrow">Что будет у&nbsp;тебя через 30 дней</span>
+    <h2 id="res">Не&nbsp;конспект, а&nbsp;работающее хозяйство</h2>
+    <div class="results">
+      <div><i>НАВЫК</i><b>Нейросети как инструмент</b><span>Понимаешь, какую модель брать, и&nbsp;у&nbsp;тебя библиотека из&nbsp;20 рабочих промптов.</span></div>
+      <div><i>КОНТЕНТ</i><b>Контент-план и&nbsp;30+ публикаций</b><span>Видео, посты и&nbsp;карусели в&nbsp;твоей теме, свой узнаваемый стиль.</span></div>
+      <div><i>АВТОВЕДЕНИЕ</i><b>Соцсети на&nbsp;две недели вперёд</b><span>YouTube, TikTok, VK, Instagram и&nbsp;Telegram из&nbsp;одного расписания, ответы на&nbsp;комментарии на&nbsp;твоё одобрение.</span></div>
+      <div><i>ЦИФРЫ</i><b>Отчёт раз в&nbsp;неделю</b><span>Claude сводит просмотры, удержание и&nbsp;подписчиков и&nbsp;говорит, что править в&nbsp;следующей серии.</span></div>
+      <div><i>ВОРОНКА</i><b>Telegram-канал и&nbsp;бот</b><span>Ссылка из&nbsp;роликов ведёт в&nbsp;бота, бот проверяет подписку и&nbsp;выдаёт материал, канал прогревает.</span></div>
+      <div><i>ДЕНЬГИ</i><b>Прайс и&nbsp;первые предложения</b><span>Пакеты роликов под заказ, скрипт разбора, список первых клиентов, которым писать.</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="how">
+    <span class="eyebrow">Пример из&nbsp;модуля 3: анимационный ролик</span>
+    <h2 id="how">Одна серия — один вечер</h2>
+    <ol class="pipe">
+      <li><b>Идея</b><span>Обыденность, которая ломается: лифт, поезд, отлив</span></li>
+      <li><b>Сценарий</b><span>Claude пишет серию по&nbsp;формуле удержания</span></li>
+      <li><b>Озвучка</b><span>Один дубль в&nbsp;ElevenLabs, скрипт режет по&nbsp;репликам</span></li>
+      <li><b>Анимация</b><span>Векторный движок: герои, камера, свет, интерфейс с&nbsp;часами</span></li>
+      <li><b>Видео</b><span>Рендер 1080×1920 в&nbsp;60&nbsp;fps со&nbsp;звуком и&nbsp;субтитрами</span></li>
+      <li><b>Выпуск</b><span>Название, закреп, расписание, разбор статистики</span></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="program">
+    <span class="eyebrow">Программа</span>
+    <h2 id="program">С&nbsp;нуля до&nbsp;своей контент-системы: 6&nbsp;модулей, 36&nbsp;уроков</h2>
+    <div class="facts">
+      <div><b>6</b><span>модулей</span></div>
+      <div><b>36</b><span>уроков с&nbsp;практикой</span></div>
+      <div><b>4</b><span>созвона один на&nbsp;один</span></div>
+      <div><b>30</b><span>дней, чат каждый день</span></div>
+    </div>
+    <div class="modules">
+      <article class="module">
+        <span class="when">Модуль 1 · неделя 1</span><h3>База нейросетей</h3>
+        <ol>
+          <li>Как устроены нейросети: модель, токены, контекст — без математики</li>
+          <li>Claude, ChatGPT, Gemini, DeepSeek: что для чего и&nbsp;сколько стоит</li>
+          <li>Промпт, который работает: роль, контекст, пример, формат ответа</li>
+          <li>Картинки, голос, видео: Gemini, Qwen, ElevenLabs — что умеют и&nbsp;где ломаются</li>
+          <li>Права и&nbsp;честность: лицензии, метка «Создано ИИ», чего делать нельзя</li>
+          <li>Практика: библиотека из&nbsp;20 своих рабочих промптов</li>
+        </ol>
+        <p class="res"><b>РЕЗУЛЬТАТ</b>Понимаешь, какую нейросеть брать под задачу, и&nbsp;пишешь промпты, которые дают нужный ответ с&nbsp;первого раза</p>
+      </article>
+      <article class="module">
+        <span class="when">Модуль 2 · неделя 1</span><h3>Claude Code: нейросеть, которая делает</h3>
+        <ol>
+          <li>Установка и&nbsp;первый проект на&nbsp;своём компьютере</li>
+          <li>Как ставить задачу агенту и&nbsp;проверять результат</li>
+          <li>Скиллы и&nbsp;CLAUDE.md: учим Claude твоим правилам</li>
+          <li>Коннекторы: документы, браузер, соцсети, статистика</li>
+          <li>Когда что-то сломалось: разбираем ошибки вместе с&nbsp;Claude</li>
+          <li>Практика: Claude делает тебе документ, таблицу и&nbsp;мини-сайт</li>
+        </ol>
+        <p class="res"><b>РЕЗУЛЬТАТ</b>Claude работает у&nbsp;тебя как ассистент, который не&nbsp;только отвечает, но&nbsp;и&nbsp;делает</p>
+      </article>
+      <article class="module">
+        <span class="when">Модуль 3 · неделя 2</span><h3>Свой тематический контент</h3>
+        <ol>
+          <li>Ниша и&nbsp;аудитория: о&nbsp;чём снимать, чтобы смотрели и&nbsp;покупали</li>
+          <li>Разбор конкурентов с&nbsp;Claude: что набирает в&nbsp;твоей теме и&nbsp;почему</li>
+          <li>Контент-план на&nbsp;месяц: рубрики, форматы, частота</li>
+          <li>Формула удержания: крючок за&nbsp;2 секунды, повороты, финал</li>
+          <li>Короткие видео в&nbsp;твоей теме: объяснялки, истории, анимация на&nbsp;нашем движке</li>
+          <li>Голос и&nbsp;субтитры: ElevenLabs одним дублем, кинетический текст</li>
+          <li>Посты, карусели и&nbsp;обложки: тексты Claude, картинки Gemini и&nbsp;Qwen</li>
+          <li>Сериал как формат удержания: библия, петли, клиффхэнгеры</li>
+        </ol>
+        <p class="res"><b>РЕЗУЛЬТАТ</b>Контент-план на&nbsp;месяц и&nbsp;первые 15 единиц контента в&nbsp;твоей теме</p>
+      </article>
+      <article class="module">
+        <span class="when">Модуль 4 · неделя 3</span><h3>Автоведение соцсетей</h3>
+        <ol>
+          <li>Одна идея — пять форматов: ролик, пост, карусель, сторис, текст для Telegram</li>
+          <li>Подписи, названия, хэштеги и&nbsp;закрепы с&nbsp;Claude под каждую площадку</li>
+          <li>Расписание и&nbsp;автопубликация: YouTube, TikTok, VK, Instagram, Telegram</li>
+          <li>Комментарии: Claude готовит ответы, ты одобряешь</li>
+          <li>Статистика: удержание, «Продолжили смотреть», что править дальше</li>
+          <li>Еженедельный отчёт от&nbsp;Claude и&nbsp;дашборд твоих соцсетей</li>
+          <li>Практика: соцсети заполнены на&nbsp;две недели вперёд</li>
+        </ol>
+        <p class="res"><b>РЕЗУЛЬТАТ</b>Соцсети ведутся по&nbsp;расписанию, ты тратишь на&nbsp;них 30–60 минут в&nbsp;день</p>
+      </article>
+      <article class="module">
+        <span class="when">Модуль 5 · неделя 4</span><h3>Деньги</h3>
+        <ol>
+          <li>Модели заработка: услуги, интеграции, свой продукт, партнёрские программы</li>
+          <li>Telegram-канал и&nbsp;прогрев: что писать, чтобы доверяли</li>
+          <li>Бот с&nbsp;проверкой подписки: Claude пишет его вместе с&nbsp;тобой</li>
+          <li>Бесплатный разбор вместо кнопки «купить»: сценарий и&nbsp;возражения</li>
+          <li>Услуги на&nbsp;нейросетях: контент и&nbsp;ведение соцсетей для бизнеса, прайс</li>
+          <li>Практика: воронка запущена, 20 предложений отправлено</li>
+        </ol>
+        <p class="res"><b>РЕЗУЛЬТАТ</b>Работающая воронка и&nbsp;первые предложения клиентам</p>
+      </article>
+      <article class="module">
+        <span class="when">Модуль 6 · неделя 4</span><h3>Дальше сам</h3>
+        <ol>
+          <li>Масштаб: вторая тема или второй канал без новой учёбы</li>
+          <li>Свой инфопродукт: как упаковать собственный опыт</li>
+          <li>План на&nbsp;3 месяца и&nbsp;финальный разбор</li>
+        </ol>
+        <p class="res"><b>РЕЗУЛЬТАТ</b>Система работает, понятно, куда расти дальше</p>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="wk">
+    <span class="eyebrow">Как проходит неделя</span>
+    <h2 id="wk">Созвон в&nbsp;понедельник, практика каждый день</h2>
+    <div class="weekplan">
+      <div class="call"><b>ПН</b>Созвон 60&nbsp;минут: разбор прошлой недели, задача на&nbsp;эту</div>
+      <div><b>ВТ</b>Урок модуля и&nbsp;практическое задание</div>
+      <div><b>СР</b>Контент: видео, пост или карусель, разбор в&nbsp;чате</div>
+      <div><b>ЧТ</b>Урок модуля, публикация по&nbsp;расписанию</div>
+      <div><b>ПТ</b>Задание недели: промпты, автоведение или воронка</div>
+      <div><b>СБ</b>Контент на&nbsp;неделю вперёд, вопросы в&nbsp;чате</div>
+      <div><b>ВС</b>Отчёт Claude по&nbsp;статистике</div>
+    </div>
+  </section>
+
+  <section aria-labelledby="fun">
+    <span class="eyebrow">Часть 4 · деньги</span>
+    <h2 id="fun">Как зритель становится клиентом</h2>
+    <div class="funnel">
+      <div><b>Сериал</b><span>Серии в&nbsp;Shorts, TikTok, VK приводят людей каждый день</span></div>
+      <div><b>Ссылка</b><span>Одна ссылка в&nbsp;описании и&nbsp;закрепе, у&nbsp;каждого ролика своя метка</span></div>
+      <div><b>Бот</b><span>Проверяет подписку на&nbsp;Telegram-канал и&nbsp;выдаёт полезный материал</span></div>
+      <div><b>Канал</b><span>Прогрев: как делается сериал, цифры, работы учеников</span></div>
+      <div><b>Разбор</b><span>Бесплатный разбор вместо кнопки «купить», продажа тем, кто спросил сам</span></div>
+    </div>
+    <p class="muted">Ту&nbsp;же цепочку можно вести на&nbsp;ролики под заказ, интеграции или собственный продукт. Бота и&nbsp;тексты пишет Claude вместе с&nbsp;тобой.</p>
+  </section>
+
+  <section aria-labelledby="lesson">
+    <span class="eyebrow">Фрагмент урока 1</span>
+    <h2 id="lesson">Первые две секунды решают всё</h2>
+    <div class="lesson">
+      <div>
+        <div class="rule"><i>1</i><p><b>Ситуация + угроза + время</b> в&nbsp;первой фразе. Никаких «привет» и&nbsp;названий.</p></div>
+        <div class="rule"><i>2</i><p><b>Открытая петля</b> в&nbsp;первые 5 секунд: тайна, ответ на&nbsp;которую будет в&nbsp;финале.</p></div>
+        <div class="rule"><i>3</i><p><b>Поворот каждые 15–25 секунд</b>, и&nbsp;каждый меняет смысл того, что уже было.</p></div>
+        <div class="rule"><i>4</i><p><b>Финал без развязки</b>: одно слово-удар и&nbsp;переход на&nbsp;следующую часть.</p></div>
+      </div>
+      <div>
+        <div class="compare">
+          <p class="bad">Сегодня расскажу историю о&nbsp;том, как люди застряли в&nbsp;лифте…</p>
+          <p class="good">23:47. Лифт встал между 17 и&nbsp;18 этажом. Вас четверо. И&nbsp;кто-то стучит по&nbsp;крыше кабины.</p>
+        </div>
+        <pre aria-label="Как это выглядит в сценарии серии"><span class="c">// так первая реплика выглядит в сценарии серии</span>
+{ <span class="k">"text"</span>: <span class="s">"23:47. Лифт встал между *17* и 18 этажом."</span>,
+  <span class="k">"scene"</span>: { <span class="k">"type"</span>: <span class="s">"tower"</span>, <span class="k">"blackout"</span>: true } }</pre>
+        <p class="muted" style="font-size:15px">Дальше в&nbsp;уроке: как Claude пишет серию по&nbsp;этой формуле и&nbsp;как проверять её чек-листом до&nbsp;озвучки.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="niche">
+    <span class="eyebrow">Пример под нишу · центр развития детей</span>
+    <h2 id="niche">Так выглядит неделя контента, которую Claude делает за&nbsp;10&nbsp;минут</h2>
+    <div class="niche">
+      <div class="niche-plan">
+        <div class="day"><b>ПН</b><span class="fmt">Ролик 30&nbsp;с</span><p>«Ребёнок не&nbsp;отзывается на&nbsp;имя? Вот что стоит проверить в&nbsp;первую очередь»</p></div>
+        <div class="day"><b>ВТ</b><span class="fmt">Карусель</span><p>Один навык за&nbsp;неделю: упражнение на&nbsp;внимание, которое можно сделать дома</p></div>
+        <div class="day"><b>СР</b><span class="fmt">Пост</span><p>Вопрос родителя: «Когда начинать занятия с&nbsp;логопедом?»</p></div>
+        <div class="day"><b>ЧТ</b><span class="fmt">Анимация</span><p>Как проходит первое занятие: история глазами ребёнка, без съёмки реальных детей</p></div>
+        <div class="day"><b>ПТ</b><span class="fmt">Сторис</span><p>Миф или правда: «Он просто перерастёт»</p></div>
+        <div class="day"><b>СБ</b><span class="fmt">Пост</span><p>Маленькая победа недели — с&nbsp;письменного согласия родителей</p></div>
+        <div class="day"><b>ВС</b><span class="fmt">Telegram</span><p>Подборка недели и&nbsp;запись на&nbsp;бесплатную консультацию через бота</p></div>
+      </div>
+      <div class="niche-notes">
+        <h3>Почему это работает в&nbsp;такой нише</h3>
+        <ul>
+          <li>Тон тёплый и&nbsp;спокойный: родители и&nbsp;так встревожены, контент без давления вызывает доверие</li>
+          <li>Анимация рассказывает истории, не&nbsp;показывая реальных детей</li>
+          <li>Польза каждую неделю: упражнения и&nbsp;ответы на&nbsp;вопросы — то, ради чего подписываются</li>
+          <li>Без медицинских обещаний и&nbsp;с&nbsp;согласием родителей на&nbsp;любые фото</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="cmp">
+    <span class="eyebrow">Сравнение</span>
+    <h2 id="cmp">Три способа вести соцсети</h2>
+    <div class="cmp-wrap">
+      <table class="cmp">
+        <thead><tr><th></th><th>Нанять SMM-специалиста</th><th>Вести самому без системы</th><th class="hl">Обучение: контент-завод</th></tr></thead>
+        <tbody>
+          <tr><th>Стоимость</th><td>от&nbsp;25–40 тыс. ₽ каждый месяц</td><td>бесплатно, но&nbsp;часы каждый день</td><td class="hl">30 000 ₽ один раз + подписки ~$25–45</td></tr>
+          <tr><th>Время владельца</th><td>согласования и&nbsp;правки</td><td>2–3 часа в&nbsp;день</td><td class="hl">30–60 минут в&nbsp;день после месяца</td></tr>
+          <tr><th>Видео и&nbsp;анимация</th><td>обычно за&nbsp;доплату</td><td>сложно и&nbsp;долго</td><td class="hl">входит, свой стиль</td></tr>
+          <tr><th>Если специалист ушёл</th><td>всё начинать заново</td><td>—</td><td class="hl">система и&nbsp;навык остаются у&nbsp;вас</td></tr>
+          <tr><th>Понимание нейросетей</th><td>нет</td><td>по&nbsp;роликам из&nbsp;интернета</td><td class="hl">с&nbsp;нуля до&nbsp;уверенной работы</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <span class="src">Стоимость SMM — ориентир по&nbsp;рынку фриланса, у&nbsp;агентств дороже.</span>
+  </section>
+
+  <section id="offer" aria-labelledby="offer-h">
+    <span class="eyebrow">Что входит</span>
+    <h2 id="offer-h">Месяц работы вдвоём</h2>
+    <div class="offer">
+      <ul class="incl">
+        <li>4 созвона один на&nbsp;один по&nbsp;60&nbsp;минут, раз в&nbsp;неделю</li>
+        <li>Чат в&nbsp;Telegram: отвечаю каждый день, помогаю, когда что-то сломалось</li>
+        <li>Разбор твоего контента до&nbsp;публикации: тексты, видео, обложки</li>
+        <li>Движок анимации, шаблоны серий, промпты сценариста, чек-листы</li>
+        <li>Настройка автопубликации и&nbsp;еженедельного отчёта по&nbsp;статистике</li>
+        <li>Шаблоны воронки: бот, посты прогрева, сценарий разбора и&nbsp;продажи, прайс на&nbsp;ролики под заказ</li>
+        <li>Доступ к&nbsp;материалам остаётся после окончания месяца</li>
+      </ul>
+      <div class="price">
+        <span class="eyebrow">Стоимость</span>
+        <span class="sum">30 000 ₽</span>
+        <small>За&nbsp;весь месяц, оплата перед стартом.</small>
+        <a class="btn" href="#faq" style="justify-self:start">Частые вопросы</a>
+      </div>
+    </div>
+    <div class="need" aria-label="Что понадобится">
+      <div><b>КОМПЬЮТЕР</b><span>Windows, Chrome. Видеокарта ускоряет рендер, но&nbsp;не&nbsp;обязательна</span></div>
+      <div><b>ПОДПИСКИ</b><span>Claude Pro и&nbsp;ElevenLabs, это примерно $25–45 в&nbsp;месяц отдельно от&nbsp;обучения</span></div>
+      <div><b>ВРЕМЯ</b><span>1–2 часа в&nbsp;день. Серия занимает вечер, к&nbsp;концу месяца быстрее</span></div>
+    </div>
+    <div class="fit">
+      <div><h3>Подходит, если</h3><ul><li>хочешь разобраться в&nbsp;нейросетях и&nbsp;применять их в&nbsp;работе</li><li>есть тема, эксперт­ность или бизнес, о&nbsp;котором хочешь вести соцсети</li><li>готов практиковаться каждый день и&nbsp;вести Telegram-канал</li><li>не&nbsp;умеешь анимировать и&nbsp;программировать: это не&nbsp;нужно</li></ul></div>
+      <div><h3>Не&nbsp;подходит, если</h3><ul><li>нужен гарантированный доход за&nbsp;месяц</li><li>нет времени на&nbsp;практику каждый день</li><li>хочешь перезаливать чужие ролики</li></ul></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="dfy">
+    <span class="eyebrow">Нет времени учиться</span>
+    <h2 id="dfy">Сделаем за&nbsp;вас: ведение соцсетей под ключ</h2>
+    <div class="dfy">
+      <div class="pack"><span class="when">Старт</span><span class="sum2">25 000 ₽<small> / мес</small></span><ul><li>2 площадки</li><li>Контент-план на&nbsp;месяц</li><li>12 постов и&nbsp;8 коротких видео</li><li>Публикация по&nbsp;расписанию</li><li>Отчёт раз в&nbsp;месяц</li></ul></div>
+      <div class="pack main"><span class="when">Стандарт</span><span class="sum2">45 000 ₽<small> / мес</small></span><ul><li>4 площадки: VK, Instagram, Telegram, Shorts/TikTok</li><li>20 постов и&nbsp;12 видео, сторис</li><li>Анимация и&nbsp;ролики-объяснения</li><li>Ответы на&nbsp;комментарии на&nbsp;ваше согласование</li><li>Отчёт каждые две недели</li></ul></div>
+      <div class="pack"><span class="when">Под ключ с&nbsp;заявками</span><span class="sum2">70 000 ₽<small> / мес</small></span><ul><li>Всё из&nbsp;«Стандарта»</li><li>Telegram-бот записи на&nbsp;консультацию</li><li>Автоответы на&nbsp;частые вопросы</li><li>Рассылка по&nbsp;базе</li><li>Креативы для рекламы</li></ul></div>
+    </div>
+    <p class="muted">Запуск — разово 15 000 ₽ (с&nbsp;ботом — 25 000 ₽): стратегия, оформление профилей, первый контент-план, настройка автопубликации. Срок от&nbsp;3&nbsp;месяцев: контент приводит людей не&nbsp;в&nbsp;первую неделю. Рекламный бюджет — отдельно.</p>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-h">
+    <h2 id="faq-h">Частые вопросы</h2>
+    <div>
+      <details><summary>Это курс только про ролики и&nbsp;сериалы?</summary><p>Нет. Начинаем с&nbsp;базы нейросетей, потом делаем контент в&nbsp;твоей теме в&nbsp;разных форматах, ставим соцсети на&nbsp;автоведение и&nbsp;строим воронку. Сериалы — пример и&nbsp;один из&nbsp;форматов.</p></details>
+      <details><summary>Я никогда не&nbsp;работал с&nbsp;нейросетями. Справлюсь?</summary><p>Да, первый модуль как раз для этого: от&nbsp;того, как устроены нейросети, до&nbsp;библиотеки своих промптов. К&nbsp;Claude Code переходим, когда база уверенная.</p></details>
+      <details><summary>Нужно уметь программировать?</summary><p>Нет. Код пишет Claude по&nbsp;твоим словам. Ты учишься ставить ему задачу, проверять результат по&nbsp;чек-листу и&nbsp;просить правки.</p></details>
+      <details><summary>Сколько я заработаю?</summary><p>Обещать доход нельзя: он зависит от&nbsp;твоего сериала и&nbsp;регулярности. Я обещаю навык и&nbsp;сериал из&nbsp;7 серий на&nbsp;твоём канале, а&nbsp;на&nbsp;четвёртой неделе разбираем легальные способы на&nbsp;этом зарабатывать.</p></details>
+      <details><summary>Это нейросетевые картинки?</summary><p>Нет. Каждый кадр рисует наш векторный движок: герои, камера, свет, частицы. Поэтому серии не&nbsp;похожи на&nbsp;слайд-шоу и&nbsp;у&nbsp;тебя будет свой стиль.</p></details>
+      <details><summary>А если у&nbsp;меня слабый компьютер?</summary><p>Движок работает в&nbsp;Chrome на&nbsp;любом современном ПК. На&nbsp;слабом рендер серии дольше, но&nbsp;его можно запустить на&nbsp;ночь.</p></details>
+      <details><summary>Что будет после месяца?</summary><p>Конвейер, шаблоны и&nbsp;материалы остаются у&nbsp;тебя. Можно продолжить работу со&nbsp;мной на&nbsp;второй месяц, это обсуждается отдельно.</p></details>
+    </div>
+  </section>
+
+  <section class="final" aria-labelledby="final-h">
+    <span class="eyebrow">Старт</span>
+    <h2 id="final-h">Через неделю — уверенная работа с&nbsp;нейросетями. Через месяц — система, которая делает основную работу за&nbsp;тебя.</h2>
+    <p class="muted">Обсудим твою идею, проверим, подходит ли формат, и&nbsp;выберем дату старта.</p>
+  </section>
+</div>
+
+<script>
+  // the HUD clock runs like the clock in the series
+  (function () {
+    var el = document.getElementById('clock');
+    var s = 23 * 3600 + 47 * 60 + 12;
+    function pad(v) { return (v < 10 ? '0' : '') + v; }
+    setInterval(function () {
+      s = (s + 1) % 86400;
+      el.textContent = pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60);
+    }, 1000);
+  })();
+</script>
+
+</html>
